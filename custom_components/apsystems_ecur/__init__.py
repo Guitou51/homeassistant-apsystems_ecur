@@ -1,19 +1,12 @@
 import logging
 import requests
 
-import voluptuous as vol
-import traceback
 from datetime import timedelta
 
 from .APSystemsSocket import APSystemsSocket, APSystemsInvalidData
-import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers.discovery import load_platform
 from homeassistant.const import CONF_HOST, CONF_SCAN_INTERVAL
-from homeassistant.helpers.entity import Entity
-from homeassistant import config_entries, exceptions
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.update_coordinator import (
-    CoordinatorEntity,
     DataUpdateCoordinator,
     UpdateFailed,
 )
@@ -22,7 +15,8 @@ _LOGGER = logging.getLogger(__name__)
 
 from .const import DOMAIN, CONF_SSID, CONF_WPA_PSK, CONF_CACHE
 
-PLATFORMS = [ "sensor", "binary_sensor", "switch" ]
+PLATFORMS = ["sensor", "binary_sensor", "switch"]
+
 
 # handle all the communications with the ECUR class and deal with our need for caching, etc
 
@@ -30,7 +24,10 @@ class WiFiSet():
     SSID = ""
     WPA = ""
     CACHE = 5
-U_WiFiSet = WiFiSet()    
+
+
+U_WiFiSet = WiFiSet()
+
 
 class ECUR():
     def __init__(self, ipaddr, ssid, wpa, cache):
@@ -65,7 +62,8 @@ class ECUR():
             data = {'SSID': U_WiFiSet.SSID, 'channel': 0, 'method': 2, 'psk_wep': '', 'psk_wpa': U_WiFiSet.WPA}
             _LOGGER.debug(f"Data sent with URL: {data}")
             # Determine ECU type to decide ECU restart (for ECU-C and ECU-R with sunspec only)
-            if (self.cached_data.get("ecu_id", None)[0:3] == "215") or (self.cached_data.get("ecu_id", None)[0:4] == "2162"):
+            if (self.cached_data.get("ecu_id", None)[0:3] == "215") or (
+                    self.cached_data.get("ecu_id", None)[0:4] == "2162"):
                 url = 'http://' + str(self.ipaddr) + '/index.php/management/set_wlan_ap'
                 headers = {'X-Requested-With': 'XMLHttpRequest'}
                 try:
@@ -73,22 +71,25 @@ class ECUR():
                     _LOGGER.debug(f"Attempt to restart ECU gave as response: {str(get_url.status_code)}.")
                     self.ecu_restarting = True
                 except Exception as err:
-                    _LOGGER.warning(f"Attempt to restart ECU failed with error: {err}. Querying is stopped automatically.")
+                    _LOGGER.warning(
+                        f"Attempt to restart ECU failed with error: {err}. Querying is stopped automatically.")
                     self.querying = False
             else:
                 # Older ECU-R models starting with 2160
-                _LOGGER.warning("Try manually power cycling the ECU. Querying is stopped automatically, turn switch back on after restart of ECU.")
+                _LOGGER.warning(
+                    "Try manually power cycling the ECU. Querying is stopped automatically, turn switch back on after restart of ECU.")
                 self.querying = False
-            
+
         if self.cached_data.get("ecu_id", None) == None:
             _LOGGER.debug(f"Cached data {self.cached_data}")
-            raise UpdateFailed(f"Unable to get correct data from ECU, and no cached data. See log for details, and try power cycling the ECU.")
+            raise UpdateFailed(
+                f"Unable to get correct data from ECU, and no cached data. See log for details, and try power cycling the ECU.")
 
         return self.cached_data
 
     def update(self):
         data = {}
-        
+
         # if we aren't actively quering data, pull data form the cache
         # this is so we can stop querying after sunset
         if not self.querying:
@@ -136,11 +137,11 @@ class ECUR():
 
         if data.get("ecu_id", None) == None:
             raise UpdateFailed(f"Somehow data doesn't contain a valid ecu_id")
-            
+
         return data
 
-async def update_listener(hass, config):
 
+async def update_listener(hass, config):
     # Handle options update being triggered by config entry options updates
     _LOGGER.debug(f"Configuration updated: {config.as_dict()}")
     host = config.data[CONF_HOST]
@@ -149,6 +150,7 @@ async def update_listener(hass, config):
     cache = config.data[CONF_CACHE]
     ecu = ECUR(host, ssid, wpa, cache)
     ecu.__init__(host, ssid, wpa, cache)
+
 
 async def async_setup_entry(hass, config):
     # Setup the APsystems platform """
@@ -171,16 +173,16 @@ async def async_setup_entry(hass, config):
         return await hass.async_add_executor_job(ecu.update)
 
     coordinator = DataUpdateCoordinator(
-            hass,
-            _LOGGER,
-            name=DOMAIN,
-            update_method=do_ecu_update,
-            update_interval=interval,
+        hass,
+        _LOGGER,
+        name=DOMAIN,
+        update_method=do_ecu_update,
+        update_interval=interval,
     )
 
     hass.data[DOMAIN] = {
-        "ecu" : ecu,
-        "coordinator" : coordinator
+        "ecu": ecu,
+        "coordinator": coordinator
     }
     await coordinator.async_config_entry_first_refresh()
 
@@ -197,7 +199,7 @@ async def async_setup_entry(hass, config):
     )
 
     inverters = coordinator.data.get("inverters", {})
-    for uid,inv_data in inverters.items():
+    for uid, inv_data in inverters.items():
         model = inv_data.get("model", "Inverter")
         device_registry.async_get_or_create(
             config_entry_id=config.entry_id,
@@ -210,6 +212,7 @@ async def async_setup_entry(hass, config):
     await hass.config_entries.async_forward_entry_setups(config, PLATFORMS)
     config.async_on_unload(config.add_update_listener(update_listener))
     return True
+
 
 async def async_unload_entry(hass, config):
     unload_ok = await hass.config_entries.async_unload_platforms(config, PLATFORMS)

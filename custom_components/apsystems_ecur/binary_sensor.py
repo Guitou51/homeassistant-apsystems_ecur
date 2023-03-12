@@ -1,4 +1,3 @@
-from datetime import timedelta
 import logging
 
 from homeassistant.components.binary_sensor import (
@@ -11,23 +10,22 @@ from homeassistant.helpers.update_coordinator import (
 
 from .const import (
     DOMAIN,
-    RELOAD_ICON,
     CACHE_ICON,
     RESTART_ICON
 )
 
 _LOGGER = logging.getLogger(__name__)
 
-async def async_setup_entry(hass, config, add_entities, discovery_info=None):
 
+async def async_setup_entry(hass, config, add_entities, discovery_info=None):
     ecu = hass.data[DOMAIN].get("ecu")
     coordinator = hass.data[DOMAIN].get("coordinator")
 
     sensors = [
-        APSystemsECUBinarySensor(coordinator, ecu, "data_from_cache", 
-            label="Using Cached Data", icon=CACHE_ICON),
+        APSystemsECUBinarySensor(coordinator, ecu, "data_from_cache",
+                                 label="Using Cached Data", icon=CACHE_ICON),
         APSystemsECUBinarySensor(coordinator, ecu, "restart_ecu",
-            label="Restart", icon=RESTART_ICON)
+                                 label="Restart", icon=RESTART_ICON)
     ]
     add_entities(sensors)
 
@@ -35,7 +33,6 @@ async def async_setup_entry(hass, config, add_entities, discovery_info=None):
 class APSystemsECUBinarySensor(CoordinatorEntity, BinarySensorEntity):
 
     def __init__(self, coordinator, ecu, field, label=None, devclass=None, icon=None):
-
         super().__init__(coordinator)
 
         self.coordinator = coordinator
@@ -68,12 +65,11 @@ class APSystemsECUBinarySensor(CoordinatorEntity, BinarySensorEntity):
 
     @property
     def extra_state_attributes(self):
-
         attrs = {
-            "ecu_id" : self._ecu.ecu.ecu_id,
-            "firmware" : self._ecu.ecu.firmware,
-            "timezone" : self._ecu.ecu.timezone,
-            "last_update" : self._ecu.ecu.last_update
+            "ecu_id": self._ecu.ecu.ecu_id,
+            "firmware": self._ecu.ecu.firmware,
+            "timezone": self._ecu.ecu.timezone,
+            "last_update": self._ecu.ecu.last_update
         }
         return attrs
 
@@ -89,4 +85,3 @@ class APSystemsECUBinarySensor(CoordinatorEntity, BinarySensorEntity):
                 (DOMAIN, parent),
             }
         }
-    

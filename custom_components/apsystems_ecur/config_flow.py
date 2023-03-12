@@ -1,23 +1,24 @@
 import logging
-import voluptuous as vol
-import traceback
 from datetime import timedelta
-from homeassistant.core import callback
-from .APSystemsSocket import APSystemsSocket, APSystemsInvalidData
-from homeassistant import config_entries, exceptions
+
+import voluptuous as vol
+from homeassistant import config_entries
 from homeassistant.const import CONF_HOST, CONF_SCAN_INTERVAL
-import homeassistant.helpers.config_validation as cv
+from homeassistant.core import callback
+
+from .APSystemsSocket import APSystemsSocket, APSystemsInvalidData
 
 _LOGGER = logging.getLogger(__name__)
 
 from .const import DOMAIN, CONF_SSID, CONF_WPA_PSK, CONF_CACHE
 
+
 @config_entries.HANDLERS.register(DOMAIN)
 class APSsystemsFlowHandler(config_entries.ConfigFlow):
-
     VERSION = 1
-    #connection classes are deprecated since 2021.6.0
-    #CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_POLL
+
+    # connection classes are deprecated since 2021.6.0
+    # CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_POLL
 
     def __init__(self):
         _LOGGER.debug("Starting config flow class...")
@@ -62,7 +63,7 @@ class APSsystemsFlowHandler(config_entries.ConfigFlow):
     async def async_step_import(self, user_input):
         _LOGGER.debug(f"Importing config for {user_input}")
         return await self.async_step_user(user_input)
-        
+
     @staticmethod
     @callback
     def async_get_options_flow(config_entry):
@@ -83,7 +84,7 @@ class APSsystemsOptionsFlowHandler(config_entries.OptionsFlow):
                 ecu_id = test_query.get("ecu_id", None)
                 if ecu_id != None:
                     self.hass.config_entries.async_update_entry(
-                    self.config_entry, data=user_input, options=self.config_entry.options
+                        self.config_entry, data=user_input, options=self.config_entry.options
                     )
                     coordinator = self.hass.data[DOMAIN].get("coordinator")
                     coordinator.update_interval = timedelta(seconds=self.config_entry.data.get(CONF_SCAN_INTERVAL))
@@ -102,14 +103,14 @@ class APSsystemsOptionsFlowHandler(config_entries.OptionsFlow):
             data_schema=vol.Schema(
                 {
                     vol.Required(CONF_HOST, default=self.config_entry.data.get(CONF_HOST)): str,
-                    vol.Optional(CONF_SCAN_INTERVAL, default=300, 
-                        description={"suggested_value": self.config_entry.data.get(CONF_SCAN_INTERVAL)}): int,
-                    vol.Optional(CONF_CACHE, default=5, 
-                        description={"suggested_value": self.config_entry.data.get(CONF_CACHE)}): int,
-                    vol.Optional(CONF_SSID, default="ECU-WiFi_SSID", 
-                        description={"suggested_value": self.config_entry.data.get(CONF_SSID)}): str,
-                    vol.Optional(CONF_WPA_PSK, default="myWiFipassword", 
-                        description={"suggested_value": self.config_entry.data.get(CONF_WPA_PSK)}): str,
+                    vol.Optional(CONF_SCAN_INTERVAL, default=300,
+                                 description={"suggested_value": self.config_entry.data.get(CONF_SCAN_INTERVAL)}): int,
+                    vol.Optional(CONF_CACHE, default=5,
+                                 description={"suggested_value": self.config_entry.data.get(CONF_CACHE)}): int,
+                    vol.Optional(CONF_SSID, default="ECU-WiFi_SSID",
+                                 description={"suggested_value": self.config_entry.data.get(CONF_SSID)}): str,
+                    vol.Optional(CONF_WPA_PSK, default="myWiFipassword",
+                                 description={"suggested_value": self.config_entry.data.get(CONF_WPA_PSK)}): str,
                 }
             )
         )

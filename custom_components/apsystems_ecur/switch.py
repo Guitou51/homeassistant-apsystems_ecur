@@ -1,6 +1,5 @@
 import logging
 
-from homeassistant.util import dt as dt_util
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.update_coordinator import (
@@ -14,14 +13,14 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-async def async_setup_entry(hass, config, add_entities, discovery_info=None):
 
+async def async_setup_entry(hass, config, add_entities, discovery_info=None):
     ecu = hass.data[DOMAIN].get("ecu")
     coordinator = hass.data[DOMAIN].get("coordinator")
 
     switches = [
-        APSystemsECUQuerySwitch(coordinator, ecu, "query_device", 
-            label="Query Device", icon=RELOAD_ICON),
+        APSystemsECUQuerySwitch(coordinator, ecu, "query_device",
+                                label="Query Device", icon=RELOAD_ICON),
     ]
     add_entities(switches)
 
@@ -29,7 +28,6 @@ async def async_setup_entry(hass, config, add_entities, discovery_info=None):
 class APSystemsECUQuerySwitch(CoordinatorEntity, SwitchEntity):
 
     def __init__(self, coordinator, ecu, field, label=None, icon=None):
-
         super().__init__(coordinator)
 
         self.coordinator = coordinator
@@ -67,7 +65,7 @@ class APSystemsECUQuerySwitch(CoordinatorEntity, SwitchEntity):
     @property
     def entity_category(self):
         return EntityCategory.CONFIG
-    
+
     @property
     def is_on(self):
         return self._ecu.querying
@@ -76,7 +74,7 @@ class APSystemsECUQuerySwitch(CoordinatorEntity, SwitchEntity):
         self._ecu.stop_query()
         self._state = False
         self.schedule_update_ha_state()
-    
+
     def turn_on(self, **kwargs):
         self._ecu.start_query()
         self._state = True
